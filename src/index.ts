@@ -16,7 +16,18 @@ export class TailwindUtils {
   private extractor: ((content: string) => string[]) | null = null
 
   constructor(options?: PackageResolvingOptions) {
-    this.packageInfo = getPackageInfoSync('tailwindcss', options) as PackageInfo
+    this.packageInfo
+      = (getPackageInfoSync('tailwindcss', options)
+        /**
+         * If `getPackageInfoSync` returns undefined, `local-pkg` may be unable
+         * to find `tailwindcss` because it is not a direct dependency in some
+         * package managers such as pnpm. Hence, provide `tailwind-api-utils`'s
+         * `import.meta.url` as a path to resolve relative to
+         */
+        ?? getPackageInfoSync('tailwindcss', {
+          ...options,
+          paths: [...(options?.paths ?? []), import.meta.url],
+        })) as PackageInfo
     if (!this.packageInfo) {
       throw new Error('Could not find tailwindcss')
     }
@@ -68,10 +79,10 @@ export class TailwindUtils {
       {
         base: pwd,
         async loadModule(id: any, base: any) {
-          return loadModule(id, base, () => {})
+          return loadModule(id, base, () => { })
         },
         async loadStylesheet(id: any, base: any) {
-          return loadStylesheet(id, base, () => {})
+          return loadStylesheet(id, base, () => { })
         },
       },
     )
